@@ -2,6 +2,7 @@ package com.lanlan.injection;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -14,6 +15,7 @@ import java.util.Properties;
 
 import javax.annotation.Resource;
 
+import com.lanlan.annotation.Autowired;
 import com.lanlan.util.CommonUtil;
 import com.lanlan.util.PackageUtil;
 @Resource(type=InputStream.class,name="ss",shareable=true)
@@ -62,23 +64,54 @@ public class InjectionScanner {
 	
 	/**
 	 * 通过注入构造并初始化类
+	 * 处理逻辑:
+	 * 1.获取类中的全部带@Autowired注解的构造方法
+	 * 2.遍历带@Autowired注解的构造方法
+	 * 3.查询带@Component的注解类表(未实例化表)
+	 * 4.若存在需要的对象,试着从objectMap获取.若获取失败则创建
 	 * @param clazz
 	 * @return
 	 */
 	private Object injectionNewInstance(Class<?> clazz) {
 		Constructor<?>[] constructors= clazz.getConstructors();
 		List<Object> parameterObjects =new ArrayList<Object>();
+		List<Constructor> autowiredConstructors=null;
 		try {
+			if(constructors.length==1){
+				
+			}
+			
 			for(Constructor<?> constructor:  constructors) {
-				Resource resource=constructor.getDeclaredAnnotation(Resource.class);
-		
-				if(resource!=null|| constructors.length==1) {
+				Autowired autowired=constructor.getDeclaredAnnotation(Autowired.class);
+				if(autowired!=null) {
+					autowiredConstructors.add(constructor);
+				}
+			}
+			
+			
+			for(Constructor<?> constructor:  autowiredConstructors) {
+				//分析构造函数
+				Autowired autowired=constructor.getDeclaredAnnotation(Autowired.class);
+				boolean required = autowired.required();//当为true时,无法调用有参构造函数,抛出异常.设置为false时,允许调用无参构造函数0
+				if(required) {
 					for(Parameter parameter:constructor.getParameters()) {
 						String parameterType = parameter.getType().getSimpleName();
+						String parameterName = parameter.getName();
 						Class<?> parameterClass = classMap.get(CommonUtil.lowerCaseFirst(parameterType));
-						
+						if(parameterClass==null){
+							parameterClass = classMap.get(parameterName);
+						}
 						if(parameterClass==null) {
-							//throw new RuntimeException("类["+clazz+"]初始化失败,找不到参数["+parameterType+" "+parameter.getName()+"]对应的对象[id="+CommonUtil.lowerCaseFirst(parameterType)+"]或者["+id="+CommonUtil.lowerCaseFirst(parameterType)+);
+							if(!required)
+							{
+								
+							}else {
+								throw new RuntimeException("类["+clazz+"]初始化失败,"
+										+ "找不到参数["+parameterType+" "+parameter.getName()+"]]"
+										+ "对应的对象id=["+CommonUtil.lowerCaseFirst(parameterType)+"]"
+										+ "或者id=["+parameterName+"]的对象");
+								
+							}
 						}
 						parameterObjects.add(injectionNewInstance(parameterClass));
 					}
@@ -91,4 +124,30 @@ public class InjectionScanner {
 		}
 		return null;
 	}
+	
+	private boolean executeConstructor( Constructor constructor) {
+		Parameter[] parameters= constructor.getParameters();
+		for (Parameter parameter : parameters) {
+			String parameterType = CommonUtil.lowerCaseFirst(parameter.getClass().getSimpleName());
+			String parameterName =parameter.getName();
+			//Annotation[] annotations =parameter.getDeclaredAnnotation();
+			//for (Annotation annotation : annotations) {
+				
+			//} 
+			Class parameterClass=null;
+			
+			parameterClass=classMap.get(parameterType);
+			if(parameterClass==null) {
+				parameterClass=classMap.get(parameterName);
+			}
+			if(parameterClass==null) {
+				return false;
+			}
+			
+			
+		}
+		return false;
+		
+	}
+	
 }
