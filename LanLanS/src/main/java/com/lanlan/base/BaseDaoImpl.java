@@ -16,7 +16,7 @@ import com.lanlan.util.DBUtil;
 public class BaseDaoImpl<T> implements BaseDao<T> {
 
 	protected ModelMapper<T> mapper;
-	protected DBUtil dbUtil;
+	//protected DBUtil dbUtil;
 	
 	/**
 	 * 构造函数,自动调用ReflectMapper类
@@ -49,7 +49,7 @@ public class BaseDaoImpl<T> implements BaseDao<T> {
 	public int insert(T model){
 
 		try {
-			return dbUtil.executeUpdate(mapper.getInsertSql(), mapper.getAllSqlParameterArray(model));
+			return DBUtil.executeUpdate(mapper.getInsertSql(), mapper.getAllSqlParameterArray(model));
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -71,7 +71,7 @@ public class BaseDaoImpl<T> implements BaseDao<T> {
 		}
 		
 		try {
-			return dbUtil.executeUpdate(sql, parameterArray);
+			return DBUtil.executeUpdate(sql, parameterArray);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -87,7 +87,7 @@ public class BaseDaoImpl<T> implements BaseDao<T> {
 	{
 		String sql = mapper.getUpdateByIdSql();
 		try {
-			return dbUtil.executeUpdate(sql, mapper.getNoIdAndIdSqlParameterArray(model));
+			return DBUtil.executeUpdate(sql, mapper.getNoIdAndIdSqlParameterArray(model));
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -101,7 +101,7 @@ public class BaseDaoImpl<T> implements BaseDao<T> {
 	 */
 	public T selectById(T model) {
 		String sql = mapper.getSelectByIdSql();
-		try(ResultSet rs =dbUtil.executeQuery(sql, mapper.getIdSqlParameterArray(model))){
+		try(ResultSet rs =DBUtil.executeQuery(sql, mapper.getIdSqlParameterArray(model))){
 			return mapper.resultSetToModel(rs);
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -119,7 +119,7 @@ public class BaseDaoImpl<T> implements BaseDao<T> {
 	 */
 	public List<T> selectAll(){
 		String sql= mapper.getSelectAllSql();
-		try(ResultSet rs = dbUtil.executeQuery(sql); ){
+		try(ResultSet rs = DBUtil.executeQuery(sql); ){
 				return  mapper.resultSetToModelList(rs);
 		}catch (SQLException e) {
 			e.printStackTrace();
@@ -157,7 +157,7 @@ public class BaseDaoImpl<T> implements BaseDao<T> {
 	 */
 	public List<T> selectByPage(int pageindex,int pagesize,String order){
 		String sql = mapper.getSelectByPageSql(order);
-		try(ResultSet rs =dbUtil.executeQuery(sql, new SqlParameter(1, (pagesize-1)*pageindex) ,
+		try(ResultSet rs =DBUtil.executeQuery(sql, new SqlParameter(1, (pageindex-1)*pagesize) ,
 				new SqlParameter(2,pagesize)))
 		{
 			return mapper.resultSetToModelList(rs);
@@ -187,7 +187,7 @@ public class BaseDaoImpl<T> implements BaseDao<T> {
 	@Override
 	public int getCount() {
 		String sql = mapper.getCountSql();
-		try(ResultSet rs = dbUtil.executeQuery(sql)){
+		try(ResultSet rs = DBUtil.executeQuery(sql)){
 			if(rs.next()) {
 				return rs.getInt(0);
 			}
@@ -201,7 +201,7 @@ public class BaseDaoImpl<T> implements BaseDao<T> {
 	public int getCount(T model ,String...fields) {
 		String sql = mapper.getCoungSql(fields);
 		SqlParameter[] sqlParameters = mapper.getSqlParameterArrayByField(model, 1, fields);
-		try(ResultSet rs = dbUtil.executeQuery(sql,sqlParameters)){
+		try(ResultSet rs = DBUtil.executeQuery(sql,sqlParameters)){
 			if(rs.next()) {
 				return rs.getInt(1);
 			}
