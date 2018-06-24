@@ -21,8 +21,8 @@ public class BaseServiceImpl<T> implements BaseService<T> {
 	}
 
 	@Override
-	public boolean deleteById(Object... ids) {
-		return dao.deleteById(ids)>0;
+	public int deleteById(Object... idsOrModels) {
+		return dao.deleteById(idsOrModels);
 	}
 
 	@Override
@@ -31,10 +31,13 @@ public class BaseServiceImpl<T> implements BaseService<T> {
 		return dao.update(model)>0;
 	}
 
-	@Override
-	public T selectById(T model) {
+
 	
+	@Override
+	public T selectById(Object model) {
+		
 		return dao.selectById(model);
+		
 	}
 
 	@Override

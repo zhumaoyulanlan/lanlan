@@ -15,6 +15,8 @@ import com.lanlan.util.DBUtil;
 
 public class BaseDaoImpl<T> implements BaseDao<T> {
 
+	protected Class<T> tClass;
+	
 	protected ModelMapper<T> mapper;
 	//protected DBUtil dbUtil;
 	
@@ -24,6 +26,7 @@ public class BaseDaoImpl<T> implements BaseDao<T> {
 	 */
 	public BaseDaoImpl(Class<T> tClass) {
 		this(tClass,new ReflectModelMapper<T>(tClass));
+	
 	}
 
 	/**
@@ -33,6 +36,7 @@ public class BaseDaoImpl<T> implements BaseDao<T> {
 	 */
 	public BaseDaoImpl(Class<T> tclass,ModelMapper<T> mapper) {
 		this.mapper =mapper;
+		this.tClass=tclass;
 	}
 	
 	//chengzh@tedu.cn
@@ -61,16 +65,67 @@ public class BaseDaoImpl<T> implements BaseDao<T> {
 	 * @param id 
 	 * @return -1:失败  0:影响行  >0 删除行数
 	 */
-	public int deleteById(Object... ids)
+	@SuppressWarnings("unchecked")
+	public int deleteById(Object... idsOrModels)
 	{
-		String sql =mapper.getDeleteByIdSql();
-		SqlParameter[] parameterArray= new SqlParameter[ids.length];
-		for(int i =0 ;i<ids.length;i++)
-		{
-			parameterArray[i]=new SqlParameter(i+1,ids[i]);
-		}
-		
 		try {
+			int[] rs=null;
+
+			if(idsOrModels==null||idsOrModels.length==0) {
+				return -1;
+			}
+			//是模型
+			int len = idsOrModels.length;
+			if(idsOrModels.getClass().equals(tClass)|| idsOrModels[0].getClass().equals(tClass)) {
+				String sql = mapper.getDeleteByIdSql();
+				SqlParameter[][] parameterArrays =new SqlParameter[len][];
+				for(int i=0;i<len;i++) {
+					parameterArrays[i] =mapper.getIdSqlParameterArray((T)idsOrModels[i]);
+				}
+				rs=DBUtil.executeUpdateBatch(sql, parameterArrays);
+			}
+
+			if(idsOrModels[0].getClass().equals(int.class)||
+					idsOrModels[0].getClass().equals(Integer.class)||
+					idsOrModels[0].getClass().equals(String.class)) {
+				String sql = mapper.getDeleteByIdSql();
+				SqlParameter[][] parameterArrays =new SqlParameter[len][];
+				for(int i=0;i<len;i++) {
+					parameterArrays[i] =new SqlParameter[] {new SqlParameter(1, idsOrModels[i])};
+				}
+				rs=DBUtil.executeUpdateBatch(sql, parameterArrays);
+			}
+			if(rs!=null) {
+				int fail=0;
+				int success=0;
+				for(int i:rs) {
+					if(i>0){
+						success=+i;
+					}
+					if(i<0) {
+						fail=+i;
+					}
+				}
+				if(fail>0) {
+					return fail;
+				}else if(success>0) {
+					return success;
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return -1;
+	}
+	/**
+	 * 通过id删除
+	 * @param model
+	 * @return -1:失败  0:影响行  >0 删除行数
+	 */
+	public int deleteById(T model) {
+		try {
+			String sql =mapper.getDeleteByIdSql();
+			SqlParameter[] parameterArray =mapper.getIdSqlParameterArray(model);
 			return DBUtil.executeUpdate(sql, parameterArray);
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -99,13 +154,32 @@ public class BaseDaoImpl<T> implements BaseDao<T> {
 	 * @param model
 	 * @return
 	 */
-	public T selectById(T model) {
+	@SuppressWarnings("unchecked")
+	public T selectById(Object idOrModel) {
+		if(idOrModel==null) {
+			return null;
+		}
+		
 		String sql = mapper.getSelectByIdSql();
-		try(ResultSet rs =DBUtil.executeQuery(sql, mapper.getIdSqlParameterArray(model))){
-			return mapper.resultSetToModel(rs);
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} 
+		if(idOrModel.getClass().equals(tClass)) {
+			try(ResultSet rs =DBUtil.executeQuery(sql, mapper.getIdSqlParameterArray((T)idOrModel))){
+				return mapper.resultSetToModel(rs);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} 
+		}
+		
+		if(int.class.equals(tClass)
+				||Integer.class.equals(tClass)
+				||String.class.equals(tClass)) {
+			
+			try(ResultSet rs =DBUtil.executeQuery(sql,new SqlParameter(1,idOrModel))){
+				return mapper.resultSetToModel(rs);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} 
+		}
+
 		return null;
 	}
 	
@@ -214,5 +288,6 @@ public class BaseDaoImpl<T> implements BaseDao<T> {
 	public T requestToModel(HttpServletRequest request) {
 		return mapper.requestToModel(request);
 	}
-	
+
+
 }

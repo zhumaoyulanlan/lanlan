@@ -23,11 +23,13 @@ public interface BaseDao<T> {
 	public int insert(T model);
 	
 	/**
-	 * 通过id删除
+	 *通过id或者model中的id删除
+	 * 当idsOrModels为id时,仅仅支持Model中只有一个id的情况,
+	 * 当model中有多个值共同作为id,请传入model
 	 * @param id 
 	 * @return -1:失败  0:影响行  >0 删除行数
 	 */
-	public int deleteById(Object... ids);
+	public int deleteById(Object... idsOrModels);
 
 	/**
 	 * 修改数据
@@ -36,7 +38,7 @@ public interface BaseDao<T> {
 	 */
 	public int update(T model);
 	
-	public T selectById(T model) ;
+	public T selectById(Object idOrModel) ;
 
 	/**
 	 * 有mapper类时可以通过mapper类将rs转化为model类型

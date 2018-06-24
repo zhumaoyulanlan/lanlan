@@ -18,13 +18,19 @@ public interface BaseService<T> {
 	 */
 	public boolean insert(T model);
 	
-	/**
-	 * 通过id删除
-	 * @param id 
-	 * @return -1:失败  0:影响行  >0 删除行数
-	 */
-	public boolean deleteById(Object... ids);
 
+	/**
+	 * 通过id或者model中的id删除
+	 * 当idsOrModels为id时,仅仅支持Model中只有一个id的情况,
+	 * 当model中有多个值共同作为id,请传入model
+	 * @param idsOrModels
+	 * @return 负数:失败行数  正数:全部成功, 删除行数
+	 */
+	public int deleteById(Object... idsOrModels);
+
+
+	
+	
 	/**
 	 * 修改数据
 	 * @param model
@@ -32,7 +38,15 @@ public interface BaseService<T> {
 	 */
 	public boolean update(T model);
 	
-	public T selectById(T model) ;
+
+
+	/**
+	 * 自动判断参数若是model,取model中的id删除
+	 * 若是String 或是Integer类型,只支持model中只有一个id时才可用
+	 * @param idsOrModles
+	 * @return
+	 */
+	public T selectById(Object idOrModle) ;
 
 	/**
 	 * 有Modelmapper类时可以通过mapper类将rs转化为model类型
