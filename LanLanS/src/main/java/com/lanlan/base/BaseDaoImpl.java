@@ -62,36 +62,35 @@ public class BaseDaoImpl<T> implements BaseDao<T> {
 	
 	/**
 	 * 通过id删除
+	 * 2018.06.25大幅度修改,参数改为可变参数
+	 * 改为通过int或者String类型的的参数删除
+	 * 同时增加了一个deleteByModelId,通过使用model类型删除
+	 * 但是为了保持兼容,此处仍可以使用model参数
 	 * @param id 
 	 * @return -1:失败  0:影响行  >0 删除行数
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
-	public int deleteById(Object... idsOrModels)
-	{
+	public int deleteById(Object... ids)	{
 		try {
 			int[] rs=null;
-
-			if(idsOrModels==null||idsOrModels.length==0) {
-				return -1;
+			if(ids==null||ids.length==0) {
+				return Integer.MIN_VALUE;
 			}
-			//是模型
-			int len = idsOrModels.length;
-			if(idsOrModels.getClass().equals(tClass)|| idsOrModels[0].getClass().equals(tClass)) {
+
+			int len = ids.length;
+			//是模型,
+			if(ids[0].getClass().equals(tClass)) {
+				return deleteByModelId((T)ids);
+			}
+			
+			if(ids[0].getClass().equals(int.class)||
+					ids[0].getClass().equals(Integer.class)||
+					ids[0].getClass().equals(String.class)) {
 				String sql = mapper.getDeleteByIdSql();
 				SqlParameter[][] parameterArrays =new SqlParameter[len][];
 				for(int i=0;i<len;i++) {
-					parameterArrays[i] =mapper.getIdSqlParameterArray((T)idsOrModels[i]);
-				}
-				rs=DBUtil.executeUpdateBatch(sql, parameterArrays);
-			}
-
-			if(idsOrModels[0].getClass().equals(int.class)||
-					idsOrModels[0].getClass().equals(Integer.class)||
-					idsOrModels[0].getClass().equals(String.class)) {
-				String sql = mapper.getDeleteByIdSql();
-				SqlParameter[][] parameterArrays =new SqlParameter[len][];
-				for(int i=0;i<len;i++) {
-					parameterArrays[i] =new SqlParameter[] {new SqlParameter(1, idsOrModels[i])};
+					parameterArrays[i] =new SqlParameter[] {new SqlParameter(1, ids[i])};
 				}
 				rs=DBUtil.executeUpdateBatch(sql, parameterArrays);
 			}
@@ -115,22 +114,119 @@ public class BaseDaoImpl<T> implements BaseDao<T> {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+		return Integer.MIN_VALUE;
+	}
+	@Override
+	public int deleteById(String... id) {
+		try {
+		if(id!=null && String.class.equals(mapper.getIdType())){
+			String sql =mapper.getDeleteByIdSql();
+			int len=id.length;
+			SqlParameter[] parameters =new SqlParameter[len];
+			for(int i=0;i<len;i++) {
+				parameters[i] =new SqlParameter(i+1,id[i]);
+			}
+			int[] rs=  DBUtil.executeUpdateBatch(sql, parameters);
+			if(rs!=null) {
+				int fail=0;
+				int success=0;
+				for(int i:rs) {
+					if(i>0){
+						success=+i;
+					}
+					if(i<0) {
+						fail=+i;
+					}
+				}
+				if(fail>0) {
+					return fail;
+				}else if(success>0) {
+					return success;
+				}
+			}
+		}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 		return -1;
 	}
+	@Override
+	public int deleteById(Integer... id) {
+		try {
+		if(id!=null && Integer.class.equals(mapper.getIdType())||int.class.equals(mapper.getIdType()) ){
+			String sql =mapper.getDeleteByIdSql();
+			int len=id.length;
+			SqlParameter[] parameters =new SqlParameter[len];
+			for(int i=0;i<len;i++) {
+				parameters[i] =new SqlParameter(i+1,id[i]);
+			}
+			int[] rs=  DBUtil.executeUpdateBatch(sql, parameters);
+			if(rs!=null) {
+				int fail=0;
+				int success=0;
+				for(int i:rs) {
+					if(i>0){
+						success=+i;
+					}
+					if(i<0) {
+						fail=+i;
+					}
+				}
+				if(fail>0) {
+					return fail;
+				}else if(success>0) {
+					return success;
+				}
+			}
+		}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return -1;
+	}
+	
 	/**
 	 * 通过id删除
 	 * @param model
 	 * @return -1:失败  0:影响行  >0 删除行数
 	 */
-	public int deleteById(T model) {
+	@Override
+	public int deleteByModelId(@SuppressWarnings("unchecked") T... model) {
 		try {
-			String sql =mapper.getDeleteByIdSql();
-			SqlParameter[] parameterArray =mapper.getIdSqlParameterArray(model);
-			return DBUtil.executeUpdate(sql, parameterArray);
-		} catch (SQLException e) {
-			e.printStackTrace();
+			int[] rs=null;
+			if(model==null||model.length==0) {
+				return -1;
 		}
-		return -1;
+		//是模型
+		int len = model.length;
+		if(model[0].getClass().equals(tClass)) {
+			String sql = mapper.getDeleteByIdSql();
+			SqlParameter[][] parameterArrays =new SqlParameter[len][];
+			for(int i=0;i<len;i++) {
+				parameterArrays[i] =mapper.getIdSqlParameterArray((T)model[i]);
+			}
+			rs=DBUtil.executeUpdateBatch(sql, parameterArrays);
+		}if(rs!=null) {
+			int fail=0;
+			int success=0;
+			for(int i:rs) {
+				if(i>0){
+					success=+i;
+				}
+				if(i<0) {
+					fail=+i;
+				}
+			}
+			if(fail>0) {
+				return fail;
+			}else if(success>0) {
+				return success;
+			}
+		}
+	} catch (SQLException e) {
+		e.printStackTrace();
+	}
+		return Integer.MIN_VALUE;
 	}
 	
 	/**
@@ -288,6 +384,7 @@ public class BaseDaoImpl<T> implements BaseDao<T> {
 	public T requestToModel(HttpServletRequest request) {
 		return mapper.requestToModel(request);
 	}
+
 
 
 }

@@ -631,6 +631,12 @@ public class ReflectModelMapper<T> implements ModelMapper<T> {
 		return null;
 	}
 
-
+	public Class<?> getIdType() {
+		if(idFieldArray.length==1) {
+			return idFieldArray[0].getType();
+		}
+		return null;
+		
+	}
 
 }

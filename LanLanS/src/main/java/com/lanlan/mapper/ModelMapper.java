@@ -116,4 +116,10 @@ public interface ModelMapper<T> {
 	 * @return
 	 */
 	public T requestToModel(ServletRequest request) ;
+	
+	/**
+	 * 当仅有一个id值时返回id类型,否则返回null
+	 * @return
+	 */
+	public Class<?> getIdType() ;
 }

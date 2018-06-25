@@ -29,8 +29,9 @@ public interface BaseDao<T> {
 	 * @param id 
 	 * @return -1:失败  0:影响行  >0 删除行数
 	 */
-	public int deleteById(Object... idsOrModels);
+	public int deleteById(Object... ids);
 
+	public int deleteByModelId(@SuppressWarnings("unchecked") T... model);
 	/**
 	 * 修改数据
 	 * @param model
@@ -61,4 +62,8 @@ public interface BaseDao<T> {
 
 	List<T> resultSetToModelList(ResultSet rs);
 	public T requestToModel(HttpServletRequest request);
+
+	public int deleteById(String... id);
+
+	public int deleteById(Integer... id);
 }
