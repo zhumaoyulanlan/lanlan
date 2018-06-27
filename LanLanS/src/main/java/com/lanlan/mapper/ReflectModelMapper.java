@@ -445,7 +445,8 @@ public class ReflectModelMapper<T> implements ModelMapper<T> {
 	public String getSelectAllSql(){
 		if(selectAllSql==null) {
 			StringBuffer sb =new StringBuffer();
-			sb.append("Select * from ").append(tableName);
+			sb.append("Select * from ").append(tableName)
+			.append(" order by ").append(orderByField.getName()).append(" ").append(orderByType);
 			selectAllSql=sb.toString();
 		}
 		return selectAllSql;
