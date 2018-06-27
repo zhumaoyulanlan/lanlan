@@ -11,7 +11,17 @@ import com.lanlan.base.BaseService;
 
 public class PageBar {
 	
-	public static <T> String getPageBar(HttpServletRequest request,BaseService<T> service,int pageSize, T model ,String...fields) { 
+	
+	/**
+	 * 获取分页bar
+	 * 生成前端分页栏的htmml代码
+	 * 如有需要后期拓展,自定义class
+	 * @param request
+	 * @param service
+	 * @param pageSize
+	 * @return
+	 */
+	public static  String getPageBar(HttpServletRequest request ,BaseService<?> service ,int pageSize) { 
 		String baseSrc=request.getRequestURI();
 		int last= baseSrc.lastIndexOf("?");
 		if(last>0) {
@@ -19,13 +29,9 @@ public class PageBar {
 		}
 
 		int pageIndex=getPageIndex(request);
-			
 		int allcount =-1;
-		if(fields!=null) {
-			allcount=service.getCount(model,fields);
-		}else{
-			allcount=service.getCount();
-		}
+		
+		allcount=service.getCount();
 		StringBuffer sb= new StringBuffer();
 		
 		int minPage=1;
@@ -54,11 +60,11 @@ public class PageBar {
 		return sb.toString();
 	}
 	
-	public static  String getPageBar(HttpServletRequest request ,BaseService<?> service ,int pageSize) { 
-		return getPageBar(request,service,pageSize,null);
-	}
-	
-	
+	/**
+	 * 获取当前页
+	 * @param request
+	 * @return
+	 */
 	public static int getPageIndex(HttpServletRequest request) {
 		String pageIndexStr= request.getParameter("pageIndex");
 		int pageIndex=1;
@@ -71,6 +77,12 @@ public class PageBar {
 		return pageIndex;
 	}
 	
+	/**
+	 * 获取页大小(配置文件固定位置 config/pageSize.properties)
+	 * 如需要自定义pagesize文件位置,后期再拓展
+	 * @param request
+	 * @return
+	 */
 	public static int getPageSize(HttpServletRequest request) {
 		ServletContext  context = request.getSession().getServletContext();
 
@@ -89,6 +101,12 @@ public class PageBar {
 		return pageSize;
 	}
 
+	/**
+	 *  * 获取页大小
+	 * @param request
+	 * @param key
+	 * @return
+	 */
 	public static int getPageSize(HttpServletRequest request,String key) {
 		ServletContext  context = request.getSession().getServletContext();
 		Integer pageSize = (Integer)context.getAttribute(key);

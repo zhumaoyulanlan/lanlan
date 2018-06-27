@@ -1,69 +1,86 @@
 package com.lanlan.base;
 
-import java.lang.reflect.InvocationTargetException;
+import java.io.Serializable;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
 
 public interface BaseService<T> {
 
 	/**
-	 * 
+	 *  插入
 	 * @param model
 	 * @return
-	 * @throws IllegalAccessException
-	 * @throws IllegalArgumentException
-	 * @throws InvocationTargetException
-	 * @throws SQLException
 	 */
-	public boolean insert(T model);
+	public boolean insert(@SuppressWarnings("unchecked") T... model);
 	
 
+	/***
+	 *  删除
+	 * @param model 存有要删除的id 的model
+	 * @return
+	 */
+	public int deleteById(@SuppressWarnings("unchecked") T... model);
+	
 	/**
-	 * 通过id或者model中的id删除
-	 * 当idsOrModels为id时,仅仅支持Model中只有一个id的情况,
-	 * 当model中有多个值共同作为id,请传入model
-	 * @param idsOrModels
-	 * @return 负数:失败行数  正数:全部成功, 删除行数
+	 * 	删除
+	 * @param id (允许传入model,兼容上个版本)
+	 * @return
 	 */
-	public int deleteById(Object... idsOrModels);
+	public int deleteById(Serializable... id);
 
 
-	
-	
 	/**
 	 * 修改数据
 	 * @param model
 	 * @return
 	 */
-	public boolean update(T model);
-	
-
+	public boolean update(@SuppressWarnings("unchecked")T... model);
 
 	/**
-	 * 自动判断参数若是model,取model中的id删除
-	 * 若是String 或是Integer类型,只支持model中只有一个id时才可用
-	 * @param idsOrModles
+	 * 查找数据
 	 * @return
-	 */
-	public T selectById(Object idOrModle) ;
-
-	/**
-	 * 有Modelmapper类时可以通过mapper类将rs转化为model类型
-	 * 如果未提供Mapper类,此方法自动创建使用ReflectModleMapper类
-	 * @return
-	 * @throws SQLException 
 	 */
 	public List<T> selectAll();
 	
+	/**
+	 * 分页查询
+	 * @param pageindex 页面索引
+	 * @param pagesize 页面大小
+	 * @return
+	 */
 	public List<T> selectByPage(int pageindex,int pagesize);
 	
-	public List<T> selectByPage(int pageindex,int pagesize,String order);
+	/**
+	 * 查找数据
+	 * @param id 兼容上个版本使用model
+	 * @return
+	 */
+	public T selectById(Serializable id);
 	
+	/**
+	 * 查找数据
+	 * @param model
+	 * @return
+	 */
+	public T selectById(T model);
+	
+	/**
+	 * 获取表名
+	 * @return
+	 */
 	public String getTableName();
 	
 	public T resultSetToModel(ResultSet rs) ;
+	public T requestToModel(HttpServletRequest request) ;
+	public List<T> resultSetToModelList(ResultSet rs) ;
 	
 	public int getCount() ;
-	public int getCount(T model ,String...fields);
+
+
+
+
+	
+	
 }

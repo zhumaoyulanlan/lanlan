@@ -1,22 +1,31 @@
 package com.lanlan.base;
 
+import java.io.Serializable;
 import java.sql.ResultSet;
 import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
 
 public class BaseServiceImpl<T> implements BaseService<T> {
 	
 	private BaseDao<T> dao;
 	
-	public BaseServiceImpl() {
-		
-	}
+	public BaseServiceImpl() {}
 	
 	public BaseServiceImpl(BaseDao<T> dao) {
 		this.dao=dao;
 	}
+
+	public BaseDao<T> getDao() {
+		return dao;
+	}
+
+	public void setDao(BaseDao<T> dao) {
+		this.dao = dao;
+	}
 	
 	@Override
-	public boolean insert(T model) {
+	public boolean insert(@SuppressWarnings("unchecked") T... model) {
 		return dao.insert(model)>0;
 	}
 
@@ -26,23 +35,26 @@ public class BaseServiceImpl<T> implements BaseService<T> {
 	}
 
 	@Override
-	public boolean update(T model) {
-		
+	public boolean update(@SuppressWarnings("unchecked") T... model) {
 		return dao.update(model)>0;
 	}
 
 
 	
 	@Override
-	public T selectById(Object model) {
+	public T selectById(Serializable id) {
 		
+		return dao.selectById(id);
+		
+	}
+	
+	@Override
+	public T selectById(T model) {
 		return dao.selectById(model);
-		
 	}
 
 	@Override
 	public List<T> selectAll() {
-
 		return dao.selectAll();
 	}
 
@@ -51,11 +63,6 @@ public class BaseServiceImpl<T> implements BaseService<T> {
 		return dao.selectByPage(pageindex, pagesize);
 	}
 
-	@Override
-	public List<T> selectByPage(int pageindex, int pagesize, String order) {
-
-		return dao.selectByPage(pageindex, pagesize,order);
-	}
 
 	@Override
 	public String getTableName() {
@@ -73,16 +80,22 @@ public class BaseServiceImpl<T> implements BaseService<T> {
 	}
 
 	@Override
-	public int getCount(T model, String... fields) {
-		return dao.getCount(model, fields);
+	public int deleteById(Serializable... id) {
+		return dao.deleteById(id);
 	}
 
-	public BaseDao<T> getDao() {
-		return dao;
+	@Override
+	public T requestToModel(HttpServletRequest request) {
+		return dao.requestToModel(request);
 	}
 
-	public void setDao(BaseDao<T> dao) {
-		this.dao = dao;
+	@Override
+	public List<T> resultSetToModelList(ResultSet rs) {
+		return dao.resultSetToModelList(rs);
 	}
+
+
+
+	
 	
 }
