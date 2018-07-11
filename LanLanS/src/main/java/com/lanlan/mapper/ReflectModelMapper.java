@@ -331,7 +331,7 @@ public class ReflectModelMapper<T> implements ModelMapper<T> {
 					}
 					list.add(model);
 				}
-				rs.close();
+				//rs.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			} catch (InstantiationException e) {

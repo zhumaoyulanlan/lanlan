@@ -261,10 +261,10 @@ public abstract class  BaseDaoImpl<T> implements BaseDao<T> {
 
 	@Override
 	public int getCount() {
-		String sql= "select count(*) from ("+getSelectAllSql()+")";
+		String sql= "select count(*) from ("+getSelectAllSql()+") t";
 		try(ResultSet rs = DBUtil.executeQuery(sql)){
 			if(rs.next()) {
-				return rs.getInt(0);
+				return rs.getInt(1);
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();

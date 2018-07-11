@@ -23,6 +23,7 @@ import org.junit.internal.runners.model.EachTestNotifier;
 
 import com.lanlan.model.SqlParameter;
 import com.lanlan.util.DBUtil;
+import com.mysql.cj.jdbc.ConnectionImpl;
 
 
 /**
@@ -37,6 +38,8 @@ public class DBUtil {
 	 */
 	private static BasicDataSource dataSource =new BasicDataSource();
 	
+	private static ThreadLocal<Connection> threadLocal = new ThreadLocal<Connection>();
+	private static ThreadLocal<Boolean> threadLocalUseable = new ThreadLocal<Boolean>();
 	/**
 	 * 初始化连接池
 	 */
@@ -67,15 +70,40 @@ public class DBUtil {
 	 * @return 一个Connection连接对象
 	 */
 	public static Connection getConnection() {
-		//Thread.currentThread();
 		try {
-			ThreadLocal<Connection> threadLocal=new ThreadLocal<Connection>();
 			Connection connection =threadLocal.get();
 			if(connection!=null) {
 				return connection;
-			}else {
-				connection=dataSource.getConnection();
-				threadLocal.set(connection);
+			}else{
+//				if(threadLocalUseable.get()==false) {
+//					throw new RuntimeException("未关闭连接就进行新操作");
+//				}
+				threadLocal.set(dataSource.getConnection());
+				//threadLocalUseable.set(false);
+				connection=(Connection)Proxy.newProxyInstance(ConnectionImpl.class.getClassLoader(),new Class<?>[]{Connection.class} ,new InvocationHandler() {
+					@Override
+					public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+						Connection connection = threadLocal.get();
+						if(connection==null) {
+							//return null;
+							throw new RuntimeException("connection is null");
+						}
+						if(method.getName().equals("close")) {
+							if(threadLocal.get()!=null&&threadLocal.get().getAutoCommit()) {
+								threadLocal.get().close();
+								threadLocal.set(null);
+							}
+							if(threadLocal.get()!=null&& !threadLocal.get().getAutoCommit()) {
+								//threadLocalUseable.set(true);
+							}
+							return null;
+						}else
+						{
+							return method.invoke(threadLocal.get(), args);
+						}
+					}
+				} );
+				//threadLocal.set(connection);
 				return connection;
 			}
 		} catch (SQLException e) {
@@ -121,9 +149,13 @@ public class DBUtil {
 				statement.close();
 			}
 			if(conn!=null) {
-				conn.rollback();
-				conn.setAutoCommit(true);
+//				if(!conn.getAutoCommit()) {
+//					conn.rollback();
+//					conn.setAutoCommit(true);
+//				}
+//				threadLocal.set(null);
 				conn.close();
+				conn=null;
 			}
 		}catch(SQLException e) {
 			e.printStackTrace();
@@ -157,6 +189,7 @@ public class DBUtil {
 			Connection conn=getConnection();
 			if(conn!=null) {
 				conn.commit();
+				conn.setAutoCommit(true);
 				close(conn);
 			}
 		} catch (SQLException e) {
@@ -217,9 +250,9 @@ public class DBUtil {
 	public static ResultSet executeQuery(String sql , SqlParameter... parameters ) 
 	{
 		try {
-			final Connection conn = getConnection();
-			final PreparedStatement stat= conn.prepareStatement(sql);
-			final ResultSet resultSet=setSqlParameter(stat,parameters).executeQuery();
+			Connection conn = getConnection();
+			PreparedStatement stat= conn.prepareStatement(sql);
+			ResultSet resultSet=setSqlParameter(stat,parameters).executeQuery();
 			System.out.println("执行sql:"+sql);
 			if(parameters!=null&&parameters.length>0) {
 				System.out.print("参数为:");
@@ -232,7 +265,7 @@ public class DBUtil {
 			return (ResultSet)Proxy.newProxyInstance(resultSet.getClass().getClassLoader(),resultSet.getClass().getInterfaces(),new InvocationHandler() {	
 				public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 					if(method.getName().equals("close")) {
-						if(conn.getAutoCommit()) {
+						if(conn!=null) {
 							close(conn,stat,resultSet);
 						}else {
 							close(null,stat,resultSet);

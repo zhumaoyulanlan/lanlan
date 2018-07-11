@@ -6,7 +6,9 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
-public interface BaseService<T> {
+import com.lanlan.util.Count;
+
+public interface BaseService<T> extends Count{
 
 	/**
 	 *  插入

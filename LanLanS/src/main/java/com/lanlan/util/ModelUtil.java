@@ -2,7 +2,6 @@ package com.lanlan.util;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.util.List;
 
 public class ModelUtil {
 

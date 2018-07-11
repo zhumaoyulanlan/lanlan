@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.lanlan.base.BaseService;
 
-public class PageBar {
+public class PageBarUtil {
 	
 	
 	/**
@@ -21,7 +21,15 @@ public class PageBar {
 	 * @param pageSize
 	 * @return
 	 */
-	public static  String getPageBar(HttpServletRequest request ,BaseService<?> service ,int pageSize) { 
+	public static  String getPageBar(HttpServletRequest request , Count service ,int pageSize) { 
+		return getPageBar(request, service.getCount(),pageSize);
+	}
+	
+	
+	
+	
+	public static  String getPageBar(HttpServletRequest request ,int countRecord ,int pageSize) { 
+
 		String baseSrc=request.getRequestURI();
 		int last= baseSrc.lastIndexOf("?");
 		if(last>0) {
@@ -31,7 +39,7 @@ public class PageBar {
 		int pageIndex=getPageIndex(request);
 		int allcount =-1;
 		
-		allcount=service.getCount();
+		allcount=countRecord;
 		StringBuffer sb= new StringBuffer();
 		
 		int minPage=1;
@@ -58,8 +66,8 @@ public class PageBar {
 		}
 		sb.append("<a class='pageBar' href='"+baseSrc+"?pageIndex="+maxPage+"'>尾页<a/>");
 		return sb.toString();
+		
 	}
-	
 	/**
 	 * 获取当前页
 	 * @param request
